@@ -1,0 +1,44 @@
+#!/usr/bin/env perl
+use strict;
+use warnings;
+
+my $root;
+use Config;
+
+BEGIN {
+    use File::Basename ();
+    use File::Spec     ();
+    $root = File::Spec->catfile( File::Basename::dirname(__FILE__), '..' );
+
+    unshift @INC, "$root/perl5/lib/perl5"                   if -d "$root/perl5";
+    unshift @INC, "$root/perl5/lib/perl5/$Config{archname}" if -d "$root/perl5";
+    unshift @INC, "$root/lib";
+}
+
+use Getopt::Long;
+use App::mm;
+use App::mm::config;
+use App::mm::logger;
+
+my $opt_config;
+my $opt_verbose;
+GetOptions(
+    'config=s' => \$opt_config,
+    'verbose'  => \$opt_verbose
+) or die("Error in command line arguments\n");
+
+die "Error: --config is required\n" unless $opt_config && -f $opt_config;
+
+my $config = App::mm::config->parse($opt_config);
+my $logger = App::mm::logger->new;
+
+my $mm = App::mm->new( logger => $logger, config => $config );
+
+$SIG{HUP} = sub {
+    $logger->info( 'caught HUP: reloading configuration %s', $opt_config );
+
+    my $config = App::mm::config->parse($opt_config);
+    $mm->reload_config($config);
+};
+
+$mm->run(@ARGV);

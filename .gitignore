@@ -1,0 +1,6 @@
+*.swp
+cover_db/
+*.bak
+perl5/
+
+*.yml
