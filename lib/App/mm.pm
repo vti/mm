@@ -201,7 +201,13 @@ sub _alert {
     );
 
     if ( my $cmd = $alert->{cmd} ) {
-        my @cmd = ( $cmd, $result, $output );
+        my @cmd = ( $cmd, $check->{host}->{hostname}, $check->{id}, $result, $output );
+
+        $self->log->debug(
+            "[%s] alert=%s cmd=%s",
+            $check->{host}->{hostname},
+            $check->{id}, $cmd
+        );
 
         my $fh = $self->run_command_pipe(@cmd);
         while ( defined( my $line = <$fh> ) ) {
