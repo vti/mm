@@ -79,7 +79,9 @@ sub _execute {
     my $self = shift;
     my ($check) = @_;
 
-    my $last_execution = $self->{executions}->{ $check->{id} };
+    my $check_id = join ':', $check->{host}->{hostname}, $check->{id};
+
+    my $last_execution = $self->{executions}->{ $check_id };
 
     if (   $last_execution
         && $last_execution->{time} + $check->{interval} > time )
@@ -158,7 +160,7 @@ sub _execute {
         }
     }
 
-    $self->{executions}->{ $check->{id} } = {
+    $self->{executions}->{ $check_id } = {
         result => $result,
         time   => time,
     };
