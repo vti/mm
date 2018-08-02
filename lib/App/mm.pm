@@ -168,9 +168,11 @@ sub _alert {
     my $self = shift;
     my ( $check, $alert, $result, $output ) = @_;
 
+    my $alert_id = join ':', $check->{host}->{id}, $alert->{id};
+
     my $do_alert;
 
-    my $last_alert = $self->{alerts}->{ $alert->{id} };
+    my $last_alert = $self->{alerts}->{ $alert_id };
 
     if ($last_alert) {
         if ( $last_alert->{result} ne $result ) {
@@ -222,7 +224,7 @@ sub _alert {
         }
     }
 
-    $self->{alerts}->{ $alert->{id} } = {
+    $self->{alerts}->{ $alert_id } = {
         time   => time,
         result => $result,
     };
