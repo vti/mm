@@ -81,7 +81,7 @@ sub _execute {
 
     my $check_id = join ':', $check->{host}->{hostname}, $check->{id};
 
-    my $last_execution = $self->{executions}->{ $check_id };
+    my $last_execution = $self->{executions}->{$check_id};
 
     if (   $last_execution
         && $last_execution->{time} + $check->{interval} > time )
@@ -130,6 +130,7 @@ sub _execute {
             $check->{id}, $output
         );
 
+        my $parser_done;
         if ( my $parsers = $check->{parsers} ) {
             foreach my $level ( keys %$parsers ) {
                 my $parser = $parsers->{$level};
@@ -140,11 +141,16 @@ sub _execute {
                     $re =~ s{/$}{};
 
                     if ( $output =~ m/$re/ ) {
-                        $result = $level;
+                        $result      = $level;
+                        $parser_done = 1;
                         last;
                     }
                 }
             }
+        }
+
+        if ( !$parser_done && $exit_code ) {
+            $result = 'critical';
         }
     }
 
@@ -160,7 +166,7 @@ sub _execute {
         }
     }
 
-    $self->{executions}->{ $check_id } = {
+    $self->{executions}->{$check_id} = {
         result => $result,
         time   => time,
     };
@@ -174,7 +180,7 @@ sub _alert {
 
     my $do_alert;
 
-    my $last_alert = $self->{alerts}->{ $alert_id };
+    my $last_alert = $self->{alerts}->{$alert_id};
 
     if ($last_alert) {
         if ( $last_alert->{result} ne $result ) {
@@ -205,7 +211,8 @@ sub _alert {
     );
 
     if ( my $cmd = $alert->{cmd} ) {
-        my @cmd = ( $cmd, $check->{host}->{hostname}, $check->{id}, $result, $output );
+        my @cmd =
+          ( $cmd, $check->{host}->{hostname}, $check->{id}, $result, $output );
 
         $self->log->debug(
             "[%s] alert=%s cmd=%s",
@@ -226,7 +233,7 @@ sub _alert {
         }
     }
 
-    $self->{alerts}->{ $alert_id } = {
+    $self->{alerts}->{$alert_id} = {
         time   => time,
         result => $result,
     };
