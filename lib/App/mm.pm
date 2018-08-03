@@ -79,7 +79,7 @@ sub _execute {
     my $self = shift;
     my ($check) = @_;
 
-    my $check_id = join ':', $check->{host}->{hostname}, $check->{id};
+    my $check_id = join ':', $check->{host}->{id}, $check->{id};
 
     my $last_execution = $self->{executions}->{$check_id};
 
@@ -186,16 +186,18 @@ sub _alert {
         if ( $last_alert->{result} ne $result ) {
             $do_alert = 'status changed';
         }
-        elsif ( $alert->{backoff} ) {
-            my $backoff_time =
-              $alert->{backoff} - ( time - $last_alert->{time} );
+        elsif ( $result ne 'ok' ) {
+            if ( $alert->{backoff} ) {
+                my $backoff_time =
+                  $alert->{backoff} - ( time - $last_alert->{time} );
 
-            if ( $backoff_time <= 0 ) {
-                $do_alert = 'backoff finished';
+                if ( $backoff_time <= 0 ) {
+                    $do_alert = 'backoff finished';
+                }
             }
-        }
-        else {
-            $do_alert = 'always';
+            else {
+                $do_alert = 'always';
+            }
         }
     }
     elsif ( $result ne 'ok' ) {
